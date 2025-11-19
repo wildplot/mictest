@@ -2,6 +2,19 @@
 
 Capture audio from a microphone on your [Raspberry Pi Pico](https://www.raspberrypi.org/products/raspberry-pi-pico/) or any [RP2040](https://www.raspberrypi.org/products/rp2040/) based board. 🎤
 
+## ** Updates in this version **
+
+### USB Microphone is Analogue 
+
+To permit
+
+### VS Code Devcontainer
+
+This project has now been updated to include a `.devcontainer` to help standardize and setup the build.
+
+If using VS Code - simply run via this container when prompted, after which you can build the project by following step 3. of "Building" below.
+
+The demo .uf2 files to download to the device are then found in `./build/examples`.
 
 ## Hardware
 
