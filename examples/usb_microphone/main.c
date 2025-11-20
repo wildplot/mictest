@@ -18,14 +18,22 @@
 #include "pico/analog_microphone.h"
 #include "usb_microphone.h"
 
+/*
+The Adafruit electret microphone amplifier (MAX9814) has a bias voltage of 1.25V with a 2Vpp 
+output on the amplifier's output. The amplifier typically operates with a supply voltage of 2.7V to 5.5V.
+ The output signal has a DC bias of VCC/2, meaning if you are using a 3.3V supply, the bias voltage will be 1.65V. 
+ If you need to couple the output to other audio equipment that requires AC coupling, a 100uF capacitor 
+ should be placed in series. 
+*/
+
 const struct analog_microphone_config config = {
     // GPIO to use for input, must be ADC compatible (GPIO 26 - 29)
     // On the Feather these correspond to A0 - A4 (Or ADC0 to ADC3)
     .gpio = 26,
     // bias voltage of microphone in volts
-    .bias_voltage = 1.25,
+    .bias_voltage = 1.65, // <---- SEE COMMENT ABOVE
     // sample rate in Hz
-    .sample_rate = 8000,
+    .sample_rate = SAMPLE_RATE,
     // number of samples to buffer
     .sample_buffer_size = SAMPLE_BUFFER_SIZE,
 };
