@@ -13,6 +13,7 @@ struct i2c_microphone_config {
     uint8_t i2c_scl;       // SCL GPIO pin
     uint32_t sample_rate;  // desired sample rate (SPS). ADS1115 max is 860
     size_t sample_buffer_size; // number of samples per internal buffer
+    uint8_t pga;           // PGA gain setting (0-5): 0=6/1, 1=3/1, 2=2/1, 3=1/1, 4=1/2, 5=1/4. Default 1 for 4.096V
 };
 
 // Initialize module (configures I2C peripheral only).

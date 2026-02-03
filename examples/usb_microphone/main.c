@@ -31,6 +31,7 @@ const struct i2c_microphone_config config = {
   .i2c_addr = 0x48,
   .i2c_sda = 4,
   .i2c_scl = 5,
+  .pga = SAMPLE_GAIN,
   .sample_rate = SAMPLE_RATE, // will be capped to ADS1115 max internally
   .sample_buffer_size = SAMPLE_BUFFER_SIZE,
 };

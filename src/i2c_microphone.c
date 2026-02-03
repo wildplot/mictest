@@ -138,14 +138,15 @@ int i2c_microphone_configure_ads1115(void)
     else if (sps >= 16) dr = 1;
     else dr = 0;
 
-    // Build a typical config: AIN0 single-ended, FS=+/-4.096V, continuous mode, chosen DR
+    // Build a typical config: AIN0 single-ended, continuous mode with configured PGA and DR
     // WARNING: Values below are illustrative. For production use, replace with a
     // tested ADS1115 driver and ensure the bitfields are correct for your ADS1115.
     uint16_t config_val = 0;
     // MUX single-ended AIN0 = 0x4 (bits 14-12)
     config_val |= (0x4 << 12);
-    // PGA: 01 => +/-4.096V (bits 11-9) -> use 0x1
-    config_val |= (0x1 << 9);
+    // PGA: bits 11-9 -> use configured PGA value (default to 1 if not set)
+    uint8_t pga_val = cfg.pga > 5 ? 1 : cfg.pga;
+    config_val |= (pga_val << 9);
     // MODE: 0 -> continuous
     // DR bits (7-5)
     config_val |= (dr & 0x7) << 5;
