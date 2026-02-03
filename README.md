@@ -4,9 +4,9 @@ Capture audio from a microphone on your [Raspberry Pi Pico](https://www.raspberr
 
 ## ** Updates in this version **
 
-### USB Microphone is Analogue 
+### USB Microphone can be Analogue or I2C based. 
 
-To permit
+To permit us to test various ADC configurations.
 
 ### VS Code Devcontainer
 
