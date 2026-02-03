@@ -4,6 +4,8 @@ Capture audio from a microphone on your [Raspberry Pi Pico](https://www.raspberr
 
 ## ** Updates in this version **
 
+Modified version of the basic library and examples to allow testing and (ultimately) calibration of various microphone/MCU board solutions.
+
 ### USB Microphone can be Analogue or I2C based. 
 
 To permit us to test various ADC configurations.
