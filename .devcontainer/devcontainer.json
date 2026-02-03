@@ -1,7 +1,14 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/ubuntu
+// README at: https://github.com/dodancs/pico-sdk-dev-container
 {
     "name": "Pico-SDK Dev Container",
     // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-    "image": "ghcr.io/dodancs/pico-sdk-dev-container:latest",
+    //"image": "ghcr.io/dodancs/pico-sdk-dev-container:latest",
+    "build": {
+        // Path is relative to the devcontainer.json file.
+        "dockerfile": "Dockerfile"
+    },
     "features": {},
     // Features to add to the dev container. More info: https://containers.dev/features.
     // "features": {},
@@ -15,16 +22,17 @@
             "extensions": [
                 "ms-vscode.cmake-tools",
                 "ms-vscode.cpptools",
-                "ms-vscode.cpptools-extension-pack",
-                "streetsidesoftware.code-spell-checker",
-                "ms-vscode.cpptools-themes",
-                "PKief.material-icon-theme",
-                "mrmlnc.vscode-duplicate",
-                "oderwat.indent-rainbow",
-                "christian-kohler.path-intellisense",
-                "shardulm94.trailing-spaces",
-                "shd101wyy.markdown-preview-enhanced",
-                "yzhang.markdown-all-in-one"
+                "ms-vscode.cpptools-extension-pack"
+                //"twxs.cmake",
+                //"streetsidesoftware.code-spell-checker",
+                //"ms-vscode.cpptools-themes",
+                //"PKief.material-icon-theme",
+                //"mrmlnc.vscode-duplicate",
+                //"oderwat.indent-rainbow",
+                //"christian-kohler.path-intellisense",
+                //"shardulm94.trailing-spaces",
+                //"shd101wyy.markdown-preview-enhanced",
+                //"yzhang.markdown-all-in-one"
             ],
             "settings": {
                 "editor.bracketPairColorization.enabled": true,
