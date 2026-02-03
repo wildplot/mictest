@@ -27,7 +27,7 @@
 
 // configuration
 const struct i2c_microphone_config config = {
-  .i2c = i2c0,
+  .i2c = i2c1,// This is how the XAIO RP2040 board has it wired
   .i2c_addr = 0x48,
   .i2c_sda = 4,
   .i2c_scl = 5,
