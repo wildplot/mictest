@@ -1,4 +1,5 @@
-# Microphone Library for Pico
+# Microphone Test
+Based on Microphone Library for Pico
 
 Capture audio from a microphone on your [Raspberry Pi Pico](https://www.raspberrypi.org/products/raspberry-pi-pico/) or any [RP2040](https://www.raspberrypi.org/products/rp2040/) based board. 🎤
 
@@ -27,6 +28,8 @@ The demo .uf2 files to download to the device are then found in `./build/example
      * [Electret Microphone Amplifier - MAX9814 with Auto Gain Control](https://www.adafruit.com/product/1713) 
    * PDM
      * [Adafruit PDM MEMS Microphone Breakout](https://www.adafruit.com/product/3492)
+   * I2C (if combined with analog)
+     * [Adafruit ADS1115](https://www.adafruit.com/product/1085)
 
 ### Default Pinout
 
