@@ -139,14 +139,4 @@ int main(void)
 
   return 0;
 }
-
-
-void on_usb_microphone_tx_ready()
-{
-  // Callback from TinyUSB library when all data is ready
-  // to be transmitted.
-  //
-  // Write local buffer to the USB microphone
-  usb_microphone_write(sample_buffer, sizeof(sample_buffer));
-}
 */
