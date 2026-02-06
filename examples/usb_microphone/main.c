@@ -22,6 +22,7 @@
  *   a dedicated high-speed ADC.
  */
 
+#include "pico/stdlib.h"
 #include "pico/i2c_microphone.h"
 #include "usb_microphone.h"
 
@@ -48,9 +49,9 @@ int main(void)
   // initialize and start the I2C microphone
   i2c_microphone_init(&config);
   // optionally reconfigure ADS1115 for continuous conversions
-  i2c_microphone_configure_ads1115();
+  //i2c_microphone_configure_ads1115();//<- PROB HERE // DON'T NEED IF CONTINUOUS
   i2c_microphone_set_samples_ready_handler(on_i2c_samples_ready);
-  i2c_microphone_start();
+  i2c_microphone_start(); 
 
   // initialize the USB microphone interface
   usb_microphone_init();
@@ -76,8 +77,8 @@ void on_usb_microphone_tx_ready()
 }
 
 
-/* Analogue microphone version
-
+/* Analogue microphone version */
+/*
 #include "pico/stdlib.h"
 #include "pico/analog_microphone.h"
 #include "usb_microphone.h"
@@ -87,7 +88,6 @@ void on_usb_microphone_tx_ready()
 // The output signal has a DC bias of VCC/2, meaning if you are using a 3.3V supply, the bias voltage will be 1.65V. 
 // If you need to couple the output to other audio equipment that requires AC coupling, a 100uF capacitor 
 // should be placed in series. 
-
 
 const struct analog_microphone_config config = {
     // GPIO to use for input, must be ADC compatible (GPIO 26 - 29)

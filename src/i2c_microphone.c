@@ -34,12 +34,13 @@ void i2c_microphone_init(const struct i2c_microphone_config *config)
     i2c_init(cfg.i2c, 100000); // 100k default; ADS1115 supports up to 400k
     gpio_set_function(cfg.i2c_sda, GPIO_FUNC_I2C);
     gpio_set_function(cfg.i2c_scl, GPIO_FUNC_I2C);
-    gpio_pull_up(cfg.i2c_sda);
+    gpio_pull_up(cfg.i2c_sda); // I wonder if Xaio RP2040 board needs pull down?
     gpio_pull_up(cfg.i2c_scl);
 
-    // allocate internal buffer
+    // allocate internal buffer 
+    // Issue seems to be with malloc line - suggests memory issue!
     if (internal_buffer) free(internal_buffer);
-    internal_buffer = malloc(sizeof(uint16_t) * cfg.sample_buffer_size);
+    internal_buffer = malloc(sizeof(uint16_t) * cfg.sample_buffer_size); //2 bytess * 17?
     internal_index = 0;
 
     // Note: this code assumes the ADS1115 is configured for continuous
@@ -145,8 +146,8 @@ int i2c_microphone_configure_ads1115(void)
     // MUX single-ended AIN0 = 0x4 (bits 14-12)
     config_val |= (0x4 << 12);
     // PGA: bits 11-9 -> use configured PGA value (default to 1 if not set)
-    uint8_t pga_val = cfg.pga > 5 ? 1 : cfg.pga;
-    config_val |= (pga_val << 9);
+    //uint8_t pga_val = cfg.pga > 5 ? 1 : cfg.pga;
+    //config_val |= (pga_val << 9);
     // MODE: 0 -> continuous
     // DR bits (7-5)
     config_val |= (dr & 0x7) << 5;
