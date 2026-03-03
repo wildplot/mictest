@@ -34,13 +34,12 @@ void i2c_microphone_init(const struct i2c_microphone_config *config)
     i2c_init(cfg.i2c, 100000); // 100k default; ADS1115 supports up to 400k
     gpio_set_function(cfg.i2c_sda, GPIO_FUNC_I2C);
     gpio_set_function(cfg.i2c_scl, GPIO_FUNC_I2C);
-    gpio_pull_up(cfg.i2c_sda); // I wonder if Xaio RP2040 board needs pull down?
+    gpio_pull_up(cfg.i2c_sda);
     gpio_pull_up(cfg.i2c_scl);
 
-    // allocate internal buffer 
-    // Issue seems to be with malloc line - suggests memory issue!
+    // allocate internal buffer
     if (internal_buffer) free(internal_buffer);
-    internal_buffer = malloc(sizeof(uint16_t) * cfg.sample_buffer_size); //2 bytess * 17?
+    internal_buffer = malloc(sizeof(uint16_t) * cfg.sample_buffer_size);
     internal_index = 0;
 
     // Note: this code assumes the ADS1115 is configured for continuous
@@ -88,7 +87,7 @@ void i2c_microphone_start(void)
     int64_t interval_us = (int64_t)(1000000LL / sps);
 
     // add repeating timer
-    if (!add_repeating_timer_us(-interval_us, sample_timer_cb, NULL, &sample_timer)) {
+    if (add_repeating_timer_us(-interval_us, sample_timer_cb, NULL, &sample_timer)) {
         timer_added = true;
     } else {
         printf("i2c_microphone: failed to add timer\n");
@@ -139,15 +138,14 @@ int i2c_microphone_configure_ads1115(void)
     else if (sps >= 16) dr = 1;
     else dr = 0;
 
-    // Build a typical config: AIN0 single-ended, continuous mode with configured PGA and DR
+    // Build a typical config: AIN0 single-ended, FS=+/-4.096V, continuous mode, chosen DR
     // WARNING: Values below are illustrative. For production use, replace with a
     // tested ADS1115 driver and ensure the bitfields are correct for your ADS1115.
     uint16_t config_val = 0;
     // MUX single-ended AIN0 = 0x4 (bits 14-12)
     config_val |= (0x4 << 12);
-    // PGA: bits 11-9 -> use configured PGA value (default to 1 if not set)
-    //uint8_t pga_val = cfg.pga > 5 ? 1 : cfg.pga;
-    //config_val |= (pga_val << 9);
+    // PGA: 01 => +/-4.096V (bits 11-9) -> use 0x1
+    config_val |= (0x1 << 9);
     // MODE: 0 -> continuous
     // DR bits (7-5)
     config_val |= (dr & 0x7) << 5;

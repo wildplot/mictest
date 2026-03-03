@@ -22,7 +22,6 @@
  *   a dedicated high-speed ADC.
  */
 
-#include "pico/stdlib.h"
 #include "pico/i2c_microphone.h"
 #include "usb_microphone.h"
 
@@ -32,7 +31,6 @@ const struct i2c_microphone_config config = {
   .i2c_addr = 0x48,
   .i2c_sda = 4,
   .i2c_scl = 5,
-  .pga = SAMPLE_GAIN,
   .sample_rate = SAMPLE_RATE, // will be capped to ADS1115 max internally
   .sample_buffer_size = SAMPLE_BUFFER_SIZE,
 };
@@ -49,9 +47,9 @@ int main(void)
   // initialize and start the I2C microphone
   i2c_microphone_init(&config);
   // optionally reconfigure ADS1115 for continuous conversions
-  //i2c_microphone_configure_ads1115();//<- PROB HERE // DON'T NEED IF CONTINUOUS
+  // i2c_microphone_configure_ads1115(); // Don't need if continuous mode already set
   i2c_microphone_set_samples_ready_handler(on_i2c_samples_ready);
-  i2c_microphone_start(); 
+  i2c_microphone_start();
 
   // initialize the USB microphone interface
   usb_microphone_init();
@@ -76,15 +74,13 @@ void on_usb_microphone_tx_ready()
   usb_microphone_write(sample_buffer, sizeof(sample_buffer));
 }
 
-
-/* Analogue microphone version */
 /*
 #include "pico/stdlib.h"
 #include "pico/analog_microphone.h"
 #include "usb_microphone.h"
 
-//The Adafruit electret microphone amplifier (MAX9814) has a bias voltage of 1.25V with a 2Vpp 
-//output on the amplifier's output. The amplifier typically operates with a supply voltage of 2.7V to 5.5V.
+// The Adafruit electret microphone amplifier (MAX9814) has a bias voltage of 1.25V with a 2Vpp 
+// output on the amplifier's output. The amplifier typically operates with a supply voltage of 2.7V to 5.5V.
 // The output signal has a DC bias of VCC/2, meaning if you are using a 3.3V supply, the bias voltage will be 1.65V. 
 // If you need to couple the output to other audio equipment that requires AC coupling, a 100uF capacitor 
 // should be placed in series. 
@@ -94,19 +90,17 @@ const struct analog_microphone_config config = {
     // On the Feather these correspond to A0 - A4 (Or ADC0 to ADC3)
     .gpio = 26,
     // bias voltage of microphone in volts
-    .bias_voltage = 1.65, // <---- SEE COMMENT ABOVE
+    .bias_voltage = 1.65,
     // sample rate in Hz
     .sample_rate = SAMPLE_RATE,
     // number of samples to buffer
     .sample_buffer_size = SAMPLE_BUFFER_SIZE,
 };
 
-
 // variables
 uint16_t sample_buffer[SAMPLE_BUFFER_SIZE];
 
 // callback functions
-
 void on_usb_microphone_tx_ready()
 {
   // Callback from TinyUSB library when all data is ready
