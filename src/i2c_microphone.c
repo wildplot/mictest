@@ -86,12 +86,14 @@ void i2c_microphone_start(void)
     // interval in microseconds (may not be exact for high rates)
     int64_t interval_us = (int64_t)(1000000LL / sps);
 
+    /*
     // add repeating timer
-    if (!add_repeating_timer_us(-interval_us, sample_timer_cb, NULL, &sample_timer)) {
+    if (add_repeating_timer_us(interval_us, sample_timer_cb, NULL, &sample_timer)) {
         timer_added = true;
     } else {
         printf("i2c_microphone: failed to add timer\n");
     }
+    */
 }
 
 void i2c_microphone_stop(void)
