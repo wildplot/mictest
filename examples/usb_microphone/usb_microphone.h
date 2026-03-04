@@ -16,7 +16,6 @@
 #endif
 
 #ifndef SAMPLE_BUFFER_SIZE
-#define SAMPLE_BUFFER_SIZE 1
 #define SAMPLE_BUFFER_SIZE ((CFG_TUD_AUDIO_EP_SZ_IN/2) - 1)
 #endif
 

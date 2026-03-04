@@ -49,9 +49,9 @@ int main(void)
   // initialize and start the I2C microphone
   i2c_microphone_init(&config);
   // optionally reconfigure ADS1115 for continuous conversions
-  //i2c_microphone_configure_ads1115();//<- PROB HERE // DON'T NEED IF CONTINUOUS
+  //i2c_microphone_configure_ads1115(); <------------ THIS CAUSES CRASH
   i2c_microphone_set_samples_ready_handler(on_i2c_samples_ready);
-  i2c_microphone_start(); 
+  //i2c_microphone_start(); <----------- THIS CAUSES CRASH - REENTRANT CALL TO I2C MICROPHONE FROM WITHIN THE SAMPLE TIMER CALLBACK?
 
   // initialize the USB microphone interface
   usb_microphone_init();
