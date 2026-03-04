@@ -55,17 +55,17 @@ void i2c_microphone_init(const struct i2c_microphone_config *config)
 static bool sample_timer_cb(repeating_timer_t *rt)
 {
     //(void)rt;
-    //if (!internal_buffer) return true;
+    if (!internal_buffer) return true;
 
     // Read the latest ADC conversion using the ADS1115 library
-    //uint16_t sample;
-    //ads1115_read_adc(&sample, &ads1115);
+    uint16_t sample;
+    ads1115_read_adc(&sample, &ads1115);
 
-    //internal_buffer[internal_index++] = sample;
-    //if (internal_index >= cfg.sample_buffer_size) {
-    //    internal_index = 0;
-    if (samples_ready_handler) samples_ready_handler();
-    //}
+    internal_buffer[internal_index++] = sample;
+    if (internal_index >= cfg.sample_buffer_size) {
+        internal_index = 0;
+        if (samples_ready_handler) samples_ready_handler();
+    }
 
     return true; // keep timer
 }
@@ -101,13 +101,13 @@ void i2c_microphone_stop(void)
 
 int i2c_microphone_read(uint16_t *buffer, size_t samples)
 {
-    //if (!internal_buffer || samples > cfg.sample_buffer_size) return 0;
+    if (!internal_buffer || samples > cfg.sample_buffer_size) return 0;
 
-    //uint16_t* in = &internal_buffer[internal_index];
+    uint16_t* in = &internal_buffer[0];
     int16_t* out = buffer;
 
     for (int i = 0; i < samples; i++) {
-        *out++ = 0; //*in++;
+        *out++ = *in++;
     }
 
     return samples;
