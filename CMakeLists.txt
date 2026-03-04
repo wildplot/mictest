@@ -45,10 +45,12 @@ add_library(pico_i2c_microphone INTERFACE)
 
 target_sources(pico_i2c_microphone INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/src/i2c_microphone.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/lib/ads1115.c
 )
 
 target_include_directories(pico_i2c_microphone INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/src/include
+    ${CMAKE_CURRENT_LIST_DIR}/src/lib/include
 )
 
 target_link_libraries(pico_i2c_microphone INTERFACE pico_stdlib hardware_i2c)

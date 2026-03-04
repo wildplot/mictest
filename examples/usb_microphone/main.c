@@ -28,7 +28,7 @@
 
 // configuration
 const struct i2c_microphone_config config = {
-  .i2c = i2c1,// This is how the XAIO RP2040 board has it wired
+  .i2c = i2c0,// This is how the XAIO RP2040 board has it wired
   .i2c_addr = 0x48,
   .i2c_sda = 4,
   .i2c_scl = 5,
@@ -49,9 +49,9 @@ int main(void)
   // initialize and start the I2C microphone
   i2c_microphone_init(&config);
   // optionally reconfigure ADS1115 for continuous conversions
-  //i2c_microphone_configure_ads1115(); <------------ THIS CAUSES CRASH
+  i2c_microphone_configure_ads1115();
   i2c_microphone_set_samples_ready_handler(on_i2c_samples_ready);
-  //i2c_microphone_start(); <----------- THIS CAUSES CRASH - REENTRANT CALL TO I2C MICROPHONE FROM WITHIN THE SAMPLE TIMER CALLBACK?
+  i2c_microphone_start();
 
   // initialize the USB microphone interface
   usb_microphone_init();

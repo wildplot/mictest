@@ -2,6 +2,7 @@
 // into an internal buffer and calls a samples-ready handler.
 
 #include "pico/i2c_microphone.h"
+#include "ads1115.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,15 +11,12 @@
 
 // Internal state
 static struct i2c_microphone_config cfg;
+static ads1115_adc_t ads1115;
 static uint16_t *internal_buffer = NULL;
 static size_t internal_index = 0;
 static void (*samples_ready_handler)(void) = NULL;
 static repeating_timer_t sample_timer;
 static bool timer_added = false;
-
-// ADS1115 registers
-#define ADS1115_REG_CONVERSION 0x00
-#define ADS1115_REG_CONFIG     0x01
 
 void i2c_microphone_set_samples_ready_handler(void (*handler)(void))
 {
@@ -30,22 +28,25 @@ void i2c_microphone_init(const struct i2c_microphone_config *config)
     // copy config
     memcpy(&cfg, config, sizeof(cfg));
 
-    // init i2c
-    i2c_init(cfg.i2c, 100000); // 100k default; ADS1115 supports up to 400k
+    // init i2c peripheral
+    i2c_init(cfg.i2c, 400000); // 100k default; ADS1115 supports up to 400k
     gpio_set_function(cfg.i2c_sda, GPIO_FUNC_I2C);
     gpio_set_function(cfg.i2c_scl, GPIO_FUNC_I2C);
-    gpio_pull_up(cfg.i2c_sda); // I wonder if Xaio RP2040 board needs pull down?
+    gpio_pull_up(cfg.i2c_sda);
     gpio_pull_up(cfg.i2c_scl);
 
-    // allocate internal buffer 
-    // Issue seems to be with malloc line - suggests memory issue!
+    // Give hardware time to stabilize
+    sleep_ms(50);
+
+    // Initialize the ADS1115 device using the library
+    ads1115_init(cfg.i2c, cfg.i2c_addr, &ads1115);
+
+    // allocate internal buffer
     if (internal_buffer) free(internal_buffer);
-    internal_buffer = malloc(sizeof(uint16_t) * cfg.sample_buffer_size); //2 bytess * 17?
+    internal_buffer = malloc(sizeof(uint16_t) * cfg.sample_buffer_size);
     internal_index = 0;
 
-    // Note: this code assumes the ADS1115 is configured for continuous
-    // conversion mode. If not, call i2c_microphone_configure_ads1115()
-    // after init to set an appropriate configuration for your sampling rate.
+    printf("i2c_microphone: Initialized ADS1115 at address 0x%02x\n", cfg.i2c_addr);
 }
 
 static bool sample_timer_cb(repeating_timer_t *rt)
@@ -53,17 +54,9 @@ static bool sample_timer_cb(repeating_timer_t *rt)
     (void)rt;
     if (!internal_buffer) return true;
 
-    // Read conversion register (2 bytes)
-    uint8_t reg = ADS1115_REG_CONVERSION;
-    uint8_t buf[2];
-    int ret = i2c_write_blocking(cfg.i2c, cfg.i2c_addr, &reg, 1, true);
-    if (ret < 0) return true; // keep timer running
-    ret = i2c_read_blocking(cfg.i2c, cfg.i2c_addr, buf, 2, false);
-    if (ret < 0) return true;
-
-    // ADS1115 provides signed 16-bit two's complement. For audio pipeline
-    // we'll pass raw 16-bit unsigned values (user can interpret as needed).
-    uint16_t sample = ((uint16_t)buf[0] << 8) | buf[1];
+    // Read the latest ADC conversion using the ADS1115 library
+    uint16_t sample;
+    ads1115_read_adc(&sample, &ads1115);
 
     internal_buffer[internal_index++] = sample;
     if (internal_index >= cfg.sample_buffer_size) {
@@ -120,45 +113,42 @@ void i2c_microphone_read(uint16_t *out, size_t len)
 
 int i2c_microphone_configure_ads1115(void)
 {
-    // This helper attempts to set ADS1115 into continuous conversion mode
-    // with a data rate not exceeding cfg.sample_rate. The register layout
-    // for ADS1115 may vary and a robust implementation should use a
-    // dedicated ADS1115 driver. This function provides a simple example.
+    // Configure ADS1115 for continuous conversion mode at maximum data rate
+    // using the ADS1115 library functions for safe register manipulation
+    
+    if (!ads1115.i2c_port) {
+        printf("i2c_microphone: ADS1115 not initialized\n");
+        return -1;
+    }
 
-    if (!cfg.i2c) return -1;
+    // Set operating mode to continuous conversion
+    ads1115_set_operating_mode(ADS1115_MODE_CONTINUOUS, &ads1115);
+    printf("i2c_microphone: Set ADS1115 to continuous conversion mode\n");
 
-    // Choose a data rate code (0..7) mapping roughly to {8,16,32,64,128,250,475,860}
-    uint32_t sps = cfg.sample_rate ? cfg.sample_rate : 128;
-    int dr = 4; // default 128
-    if (sps >= 860) dr = 7;
-    else if (sps >= 475) dr = 6;
-    else if (sps >= 250) dr = 5;
-    else if (sps >= 128) dr = 4;
-    else if (sps >= 64) dr = 3;
-    else if (sps >= 32) dr = 2;
-    else if (sps >= 16) dr = 1;
-    else dr = 0;
+    // Set data rate to maximum (860 SPS)
+    ads1115_set_data_rate(ADS1115_RATE_860_SPS, &ads1115);
+    printf("i2c_microphone: Set ADS1115 data rate to 860 SPS\n");
 
-    // Build a typical config: AIN0 single-ended, continuous mode with configured PGA and DR
-    // WARNING: Values below are illustrative. For production use, replace with a
-    // tested ADS1115 driver and ensure the bitfields are correct for your ADS1115.
-    uint16_t config_val = 0;
-    // MUX single-ended AIN0 = 0x4 (bits 14-12)
-    config_val |= (0x4 << 12);
-    // PGA: bits 11-9 -> use configured PGA value (default to 1 if not set)
-    //uint8_t pga_val = cfg.pga > 5 ? 1 : cfg.pga;
-    //config_val |= (pga_val << 9);
-    // MODE: 0 -> continuous
-    // DR bits (7-5)
-    config_val |= (dr & 0x7) << 5;
-    // COMP_QUE disable comparator (bits 1-0 = 11)
-    config_val |= 0x3;
+    // Set PGA based on config value (convert from user format to library enum)
+    // Assuming cfg.pga is in range 0-5, map to library PGA values
+    enum ads1115_pga_t pga_setting;
+    switch (cfg.pga) {
+        case 0: pga_setting = ADS1115_PGA_6_144; break;
+        case 1: pga_setting = ADS1115_PGA_4_096; break;
+        case 2: pga_setting = ADS1115_PGA_2_048; break;
+        case 3: pga_setting = ADS1115_PGA_1_024; break;
+        case 4: pga_setting = ADS1115_PGA_0_512; break;
+        case 5: pga_setting = ADS1115_PGA_0_256; break;
+        default: pga_setting = ADS1115_PGA_4_096; break;
+    }
+    ads1115_set_pga(pga_setting, &ads1115);
+    printf("i2c_microphone: Set ADS1115 PGA to value %d\n", cfg.pga);
 
-    uint8_t out[3];
-    out[0] = ADS1115_REG_CONFIG;
-    out[1] = (uint8_t)((config_val >> 8) & 0xFF);
-    out[2] = (uint8_t)(config_val & 0xFF);
-
-    int ret = i2c_write_blocking(cfg.i2c, cfg.i2c_addr, out, 3, false);
-    return (ret >= 0) ? 0 : ret;
+    // Write all configuration changes to the device
+    ads1115_write_config(&ads1115);
+    
+    sleep_ms(10); // Allow time for configuration to take effect
+    
+    printf("i2c_microphone: ADS1115 configured successfully (continuous, 860 SPS)\n");
+    return 0;
 }
