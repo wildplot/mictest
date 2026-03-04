@@ -28,7 +28,7 @@ void i2c_microphone_stop(void);
 
 // Read `len` samples from the internal buffer into `out`.
 // `len` must be <= config->sample_buffer_size and samples are 16-bit unsigned.
-void i2c_microphone_read(uint16_t *out, size_t len);
+int i2c_microphone_read(uint16_t *out, size_t len);
 
 // Set a handler that will be called when the internal sample buffer is ready.
 void i2c_microphone_set_samples_ready_handler(void (*handler)(void));
