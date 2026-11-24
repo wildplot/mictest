@@ -37,6 +37,10 @@ const struct i2c_microphone_config config = {
 
 static volatile uint16_t latest_adc_sample;
 static uint16_t usb_sample_buffer[SAMPLE_BUFFER_SIZE];
+static int16_t adc_sample_history[4];
+static int32_t adc_sample_sum;
+static size_t adc_sample_history_index;
+static size_t adc_sample_count;
 
 // callback functions
 void on_i2c_samples_ready();
@@ -65,9 +69,21 @@ int main(void)
 
 void on_i2c_samples_ready()
 {
-  uint16_t sample;
-  i2c_microphone_read(&sample, 1);
-  latest_adc_sample = sample;
+  uint16_t raw_sample;
+  i2c_microphone_read(&raw_sample, 1);
+
+  int16_t sample = (int16_t)raw_sample;
+  adc_sample_sum -= adc_sample_history[adc_sample_history_index];
+  adc_sample_history[adc_sample_history_index] = sample;
+  adc_sample_sum += sample;
+  adc_sample_history_index = (adc_sample_history_index + 1) % 4;
+
+  if (adc_sample_count < 4) {
+    adc_sample_count++;
+  }
+
+  int16_t averaged_sample = (int16_t)(adc_sample_sum / (int32_t)adc_sample_count);
+  latest_adc_sample = (uint16_t)averaged_sample;
 }
 
 void on_usb_microphone_tx_ready()
