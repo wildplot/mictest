@@ -19,6 +19,7 @@ static bool timer_added = false;
 // ADS1115 registers
 #define ADS1115_REG_CONVERSION 0x00
 #define ADS1115_REG_CONFIG     0x01
+#define ADS1115_PGA_RANGE      0x5 // +/-0.256 V, 16x more sensitive than +/-4.096 V
 
 void i2c_microphone_set_samples_ready_handler(void (*handler)(void))
 {
@@ -138,14 +139,14 @@ int i2c_microphone_configure_ads1115(void)
     else if (sps >= 16) dr = 1;
     else dr = 0;
 
-    // Build a typical config: AIN0 single-ended, FS=+/-4.096V, continuous mode, chosen DR
+    // Build a typical config: AIN0 single-ended, continuous mode, chosen DR
     // WARNING: Values below are illustrative. For production use, replace with a
     // tested ADS1115 driver and ensure the bitfields are correct for your ADS1115.
     uint16_t config_val = 0;
     // MUX single-ended AIN0 = 0x4 (bits 14-12)
     config_val |= (0x4 << 12);
-    // PGA: 01 => +/-4.096V (bits 11-9) -> use 0x1
-    config_val |= (0x1 << 9);
+    // PGA range bits 11-9: 101 => +/-0.256 V
+    config_val |= (ADS1115_PGA_RANGE << 9);
     // MODE: 0 -> continuous
     // DR bits (7-5)
     config_val |= (dr & 0x7) << 5;
@@ -157,6 +158,6 @@ int i2c_microphone_configure_ads1115(void)
     out[1] = (uint8_t)((config_val >> 8) & 0xFF);
     out[2] = (uint8_t)(config_val & 0xFF);
 
-    int ret = i2c_write_blocking(cfg.i2c, cfg.i2c_addr, out, 3, false);
+    int ret = i2c_write_timeout_us(cfg.i2c, cfg.i2c_addr, out, 3, false, 10000);
     return (ret >= 0) ? 0 : ret;
 }

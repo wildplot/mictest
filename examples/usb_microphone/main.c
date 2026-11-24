@@ -27,16 +27,16 @@
 
 // configuration
 const struct i2c_microphone_config config = {
-  .i2c = i2c1,// This is how the XAIO RP2040 board has it wired
+  .i2c = i2c1, // Challenger RP2040 SDA/SCL header: GPIO 2/3, I2C1
   .i2c_addr = 0x48,
-  .i2c_sda = 4,
-  .i2c_scl = 5,
-  .sample_rate = SAMPLE_RATE, // will be capped to ADS1115 max internally
-  .sample_buffer_size = SAMPLE_BUFFER_SIZE,
+  .i2c_sda = 2, // For the XAIO - might be 4 and 5
+  .i2c_scl = 3,
+  .sample_rate = 860,
+  .sample_buffer_size = 1,
 };
 
-// variables
-uint16_t sample_buffer[SAMPLE_BUFFER_SIZE];
+static volatile uint16_t latest_adc_sample;
+static uint16_t usb_sample_buffer[SAMPLE_BUFFER_SIZE];
 
 // callback functions
 void on_i2c_samples_ready();
@@ -44,16 +44,17 @@ void on_usb_microphone_tx_ready();
 
 int main(void)
 {
-  // initialize and start the I2C microphone
+  // Initialize the ADS1115 and use its maximum continuous conversion rate.
   i2c_microphone_init(&config);
-  // optionally reconfigure ADS1115 for continuous conversions
-  // i2c_microphone_configure_ads1115(); // Don't need if continuous mode already set
+  int ads_configured = i2c_microphone_configure_ads1115() == 0;
   i2c_microphone_set_samples_ready_handler(on_i2c_samples_ready);
-  i2c_microphone_start();
 
   // initialize the USB microphone interface
   usb_microphone_init();
   usb_microphone_set_tx_ready_handler(on_usb_microphone_tx_ready);
+  if (ads_configured) {
+    i2c_microphone_start();
+  }
 
   while (1) {
     usb_microphone_task();
@@ -64,14 +65,19 @@ int main(void)
 
 void on_i2c_samples_ready()
 {
-  // Read new samples into local buffer.
-  i2c_microphone_read(sample_buffer, SAMPLE_BUFFER_SIZE);
+  uint16_t sample;
+  i2c_microphone_read(&sample, 1);
+  latest_adc_sample = sample;
 }
 
 void on_usb_microphone_tx_ready()
 {
-  // Send samples to USB
-  usb_microphone_write(sample_buffer, sizeof(sample_buffer));
+  // Hold each 860 SPS ADC reading across the 8 kHz USB audio frames.
+  uint16_t sample = latest_adc_sample;
+  for (size_t i = 0; i < SAMPLE_BUFFER_SIZE; i++) {
+    usb_sample_buffer[i] = sample;
+  }
+  usb_microphone_write(usb_sample_buffer, sizeof(usb_sample_buffer));
 }
 
 /*

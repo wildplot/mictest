@@ -10,13 +10,12 @@
 
 #include "tusb.h"
 
-// Looks like CFG_TUD_AUDIO_EP_SZ_IN evaluates to 17
 #ifndef SAMPLE_RATE
-#define SAMPLE_RATE (((CFG_TUD_AUDIO_EP_SZ_IN / 2) - 1) * 100)
+#define SAMPLE_RATE 8000
 #endif
 
 #ifndef SAMPLE_BUFFER_SIZE
-#define SAMPLE_BUFFER_SIZE ((CFG_TUD_AUDIO_EP_SZ_IN/2) - 1)
+#define SAMPLE_BUFFER_SIZE (SAMPLE_RATE / 1000)
 #endif
 
 #ifndef SAMPLE_GAIN
